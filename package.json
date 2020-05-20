@@ -1,0 +1,47 @@
+{
+  "name": "hub88test",
+  "private": true,
+  "description": "HUB88 test app",
+  "version": "1.0.0",
+  "author": "Andrei Sosnin <andrei.sosnin@gmail.com>",
+  "dependencies": {
+    "@material-ui/core": "^3.9.3",
+    "@material-ui/icons": "^3.0.2",
+    "apollo-graphql": "^0.4.4",
+    "gatsby": "^2.3.5",
+    "gatsby-image": "^2.0.37",
+    "gatsby-plugin-manifest": "^2.0.26",
+    "gatsby-plugin-offline": "^2.0.25",
+    "gatsby-plugin-react-helmet": "^3.0.11",
+    "graphql": "^15.0.0",
+    "prop-types": "^15.7.2",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-helmet": "^5.2.0",
+    "react-jss": "^8.6.1"
+  },
+  "devDependencies": {
+    "gh-pages": "^2.0.1",
+    "prettier": "^1.16.4"
+  },
+  "keywords": [
+    "gatsby"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "build": "gatsby build",
+    "develop": "gatsby develop",
+    "format": "prettier --write src/**/*.{js,jsx}",
+    "start": "npm run develop",
+    "serve": "gatsby serve",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pranshuchittora/gatsby-material-boilerplate"
+  },
+  "bugs": {
+    "url": "https://github.com/pranshuchittora/gatsby-material-boilerplate/issues"
+  }
+}
