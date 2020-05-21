@@ -6,6 +6,7 @@ import Toolbar from "@material-ui/core/Toolbar"
 import Typography from "@material-ui/core/Typography"
 import IconButton from "@material-ui/core/IconButton"
 import MenuIcon from "@material-ui/icons/Menu"
+import { useStaticQuery, graphql } from "gatsby"
 
 const styles = {
   root: {
@@ -17,7 +18,17 @@ const styles = {
   },
 }
 
+
 function DenseAppBar(props) {
+  const data = useStaticQuery(graphql`
+  query {
+    site {
+      siteMetadata {
+        title
+      }
+    }
+  }
+  `)
   const { classes } = props
   return (
     <div className={classes.root}>
@@ -31,7 +42,7 @@ function DenseAppBar(props) {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" color="inherit">
-            Gatsby Material Boilerplate
+          {data.site.siteMetadata.title}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -42,5 +53,6 @@ function DenseAppBar(props) {
 DenseAppBar.propTypes = {
   classes: PropTypes.object.isRequired,
 }
+
 
 export default withStyles(styles)(DenseAppBar)

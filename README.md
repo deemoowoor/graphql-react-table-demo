@@ -11,7 +11,7 @@
 
  - Backend graphql server should be mocked
  - Server could be the same for both frontends
- - The task will be to create to separate deployable frontends.
+ - The task will be to create two separate deployable frontends.
  Components should be reused between projects as much as possible
  - Frontend should look OK
 
