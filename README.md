@@ -1,5 +1,4 @@
 # HUB88 Test Task
-===============================
 
 ## Tech included
 
