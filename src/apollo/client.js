@@ -96,7 +96,7 @@ addTransaction({ uuid: uuid4(), amount: 1.0, currency: "BTC" })
 addTransaction({ uuid: uuid4(), amount: -0.1, currency: "BTC" })
 addTransaction({ uuid: uuid4(), amount: -0.2, currency: "EUR" })
 
-for (var i = 0; i < 10000; i++) {
+for (var i = 0; i < 20000; i++) {
   addTransaction({
     uuid: uuid4(),
     amount: ((Math.random() * 1000) % 1000.0) - 500.0,

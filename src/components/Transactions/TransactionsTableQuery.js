@@ -91,7 +91,9 @@ export default function TransactionsTableQuery({readonly}) {
         }
 
         if (!data || !data.transactionConnection.edges || error) {
-          console.log(error)
+          if (error) {
+            console.error(error)
+          }
           return (
             <Card className="rotate-div">
               <CardHeader
@@ -107,7 +109,6 @@ export default function TransactionsTableQuery({readonly}) {
 
         const rows = data.transactionConnection.edges.map(edge => edge.node)
         const totalCount = data.transactionConnection.pageInfo.endCursor
-        console.log(rows)
 
         return (
           <>
@@ -119,7 +120,7 @@ export default function TransactionsTableQuery({readonly}) {
               handleRequestSort={handleRequestSort}
               readonly={readonly} />
             <TablePagination
-              rowsPerPageOptions={[10, 50, 100, 500, 1000]}
+              rowsPerPageOptions={[10, 50, 100, 500, 1000, 10000]}
               component="div"
               count={totalCount}
               rowsPerPage={rowsPerPage}
