@@ -1,5 +1,6 @@
 import React from "react"
-import PropTypes from "prop-types"
+
+import clsx from 'clsx';
 import { withStyles } from "@material-ui/core/styles"
 import AppBar from "@material-ui/core/AppBar"
 import Toolbar from "@material-ui/core/Toolbar"
@@ -7,6 +8,12 @@ import Typography from "@material-ui/core/Typography"
 import IconButton from "@material-ui/core/IconButton"
 import MenuIcon from "@material-ui/icons/Menu"
 import { useStaticQuery, graphql } from "gatsby"
+import Drawer from '@material-ui/core/Drawer';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import LibraryBooksIcon from '@material-ui/icons/LibraryBooks';
+import Link from '@material-ui/core/Link';
 
 const styles = {
   root: {
@@ -16,20 +23,49 @@ const styles = {
     marginLeft: -18,
     marginRight: 10,
   },
+  list: {
+    width: 250,
+  }
 }
-
 
 function DenseAppBar(props) {
   const data = useStaticQuery(graphql`
-  query {
-    site {
-      siteMetadata {
-        title
+    query {
+      site {
+        siteMetadata {
+          title
+        }
       }
     }
-  }
   `)
   const { classes } = props
+
+  const [menu, setMenu] = React.useState(false)
+
+  const toggleMenu = (open) => (event) => {
+    if (event.type === 'keyDown' && (event.key === 'Tab' || event.key === 'Shift')){
+      return;
+    }
+    setMenu(open)
+  }
+  
+  const list = () => (
+    <div 
+      className={clsx(classes.list)}
+      role="presentation"
+      onClick={toggleMenu(false)}
+      onKeyDown={toggleMenu(false)}>
+        <List>
+          <ListItem key={"Customer's page"}>
+            <LibraryBooksIcon/><Link href="/"><ListItemText primary="Customer's page"></ListItemText></Link>
+          </ListItem>
+          <ListItem key={"Backoffice page"}>
+            <LibraryBooksIcon/><Link href="/backoffice"><ListItemText primary="Backoffice"></ListItemText></Link>
+          </ListItem>
+        </List>
+    </div>
+  )
+  
   return (
     <div className={classes.root}>
       <AppBar position="static">
@@ -38,21 +74,23 @@ function DenseAppBar(props) {
             className={classes.menuButton}
             color="inherit"
             aria-label="Menu"
+            onClick={toggleMenu(true)}
           >
             <MenuIcon />
           </IconButton>
+          <Drawer
+            open={menu}
+            onClose={toggleMenu(false)}
+          >
+            {list()}
+          </Drawer>
           <Typography variant="h6" color="inherit">
-          {data.site.siteMetadata.title}
+            {data.site.siteMetadata.title}
           </Typography>
         </Toolbar>
       </AppBar>
     </div>
   )
 }
-
-DenseAppBar.propTypes = {
-  classes: PropTypes.object.isRequired,
-}
-
 
 export default withStyles(styles)(DenseAppBar)

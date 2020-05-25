@@ -9,15 +9,15 @@ import NavBar from "../components/NavBar"
 import "../style/index.css"
 import TransactionsTableQuery from "../components/Transactions/TransactionsTableQuery"
 
-const IndexPage = () => (
+const BackofficePage = () => (
   <ApolloProvider client={client}>
     <React.Fragment>
       <NavBar />
       <Container maxWidth="lg">
-        <TransactionsTableQuery readonly={true} />
+        <TransactionsTableQuery />
       </Container>
     </React.Fragment>
   </ApolloProvider>
 )
 
-export default IndexPage
+export default BackofficePage
