@@ -142,9 +142,14 @@ class EnhancedVirtualizedTable extends React.Component {
     rowData,
     style,
     onRowClick,
-    columnsSpec
+    columnsSpec,
   }) => {
     const { readonly, classes } = this.props
+
+    if (!rowData) {
+      return null
+    }
+
     const isItemSelected = this.isSelected(rowData.id) && !readonly
     const labelId = `enhanced-table-checkbox-${index}`
 
@@ -165,7 +170,8 @@ class EnhancedVirtualizedTable extends React.Component {
           <TableCell
             component="div"
             padding="checkbox"
-            className={clsx(classes.tableCell, classes.flexContainer)}>
+            className={clsx(classes.tableCell, classes.flexContainer)}
+          >
             <Checkbox
               checked={isItemSelected}
               inputProps={{ "aria-labelledby": labelId }}
@@ -173,21 +179,19 @@ class EnhancedVirtualizedTable extends React.Component {
           </TableCell>
         ) : null}
 
-        {columns.map((item, index) => {
-          return (
-            <TableCell
-              key={index}
-              component="div"
-              id={labelId}
-              scope="row"
-              padding="default"
-              align={columnsSpec[index].numeric ? "right" : "left"}
-              className={clsx(classes.tableCell, classes.flexContainer)}
-            >
-              {item}
-            </TableCell>
-          )
-        })}
+        {columns.map((item, index) => (
+          <TableCell
+            key={index}
+            component="div"
+            id={labelId}
+            scope="row"
+            padding="default"
+            align={columnsSpec[index].numeric ? "right" : "left"}
+            className={clsx(classes.tableCell, classes.flexContainer)}
+          >
+            {item}
+          </TableCell>
+        ))}
       </TableRow>
     )
   }
@@ -223,6 +227,21 @@ class EnhancedVirtualizedTable extends React.Component {
       ...tableProps
     } = this.props
 
+    const carefulCellDataGetter = _ref => {
+      if (!_ref.rowData) {
+        return null
+      }
+
+      const dataKey = _ref.dataKey,
+        rowData = _ref.rowData
+
+      if (typeof rowData.get === "function") {
+        return rowData.get(dataKey)
+      } else {
+        return rowData[dataKey]
+      }
+    }
+
     return (
       <AutoSizer>
         {({ height, width }) => (
@@ -236,13 +255,13 @@ class EnhancedVirtualizedTable extends React.Component {
             headerHeight={headerHeight}
             className={classes.table}
             rowGetter={({ index }) => rows[index]}
-            rowCount={rowsPerPage}
+            rowCount={rowCount}
             rowClassName={this.getRowClassName}
             onRowClick={onRowClick}
             rowRenderer={rowProps =>
               this.rowRenderer({
                 columnsSpec: columns,
-                ...rowProps
+                ...rowProps,
               })
             }
             {...tableProps}
@@ -260,7 +279,10 @@ class EnhancedVirtualizedTable extends React.Component {
                       readonly,
                       orderBy,
                       order,
-                    })}
+                    })
+                  }
+                  cellDataGetter={carefulCellDataGetter}
+                  cellRenderer={props => props.cellData}
                   className={classes.flexContainer}
                   dataKey={dataKey}
                   flexGrow={1}

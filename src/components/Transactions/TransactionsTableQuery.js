@@ -20,9 +20,11 @@ import Paper from "@material-ui/core/Paper"
 import EnhancedTable from "../EnhancedTable/EnhancedTable"
 import EnhancedTableToolbar from "../EnhancedTable/EnhancedTableToolbar"
 
-const getTransactionsQuery = (cursor, pageSize, order, orderBy) => gql`
+const getTransactionsQuery = (cursor, pageSize, order, orderBy, filter) => 
+{
+  return gql`
   {
-    transactionConnection(page: ${cursor}, pageSize: ${pageSize}, order: "${order}", orderBy: "${orderBy}") {
+    transactionConnection(page: ${cursor}, pageSize: ${pageSize}, order: "${order}", orderBy: "${orderBy}", filter: "${filter}") {
       edges {
         node {
           id
@@ -41,6 +43,7 @@ const getTransactionsQuery = (cursor, pageSize, order, orderBy) => gql`
     }
   }
 `
+}
 
 const columns = [
   {
@@ -66,20 +69,50 @@ const columns = [
   },
 ]
 
+const LoadingCard = () => (
+  <Card className="rotate-div">
+    <CardHeader
+      avatar={
+        <HourglassEmptyOutlined color="primary" className="rotate-infinite" />
+      }
+      title="Transactions list loading..."
+    ></CardHeader>
+    <CardContent>
+      <Typography>Please, wait...</Typography>
+    </CardContent>
+    <LinearProgress color="primary" />
+  </Card>
+)
+
+const ErrorCard = ({ error }) => (
+  <Card className="rotate-div">
+    <CardHeader
+      avatar={<Error color="secondary" />}
+      title="Loading transactions list failed!"
+    ></CardHeader>
+    <CardContent>
+      <Typography>Error: {error || "no data"}</Typography>
+    </CardContent>
+  </Card>
+)
+
 export default function TransactionsTableQuery({ readonly }) {
   const [order, setOrder] = React.useState("asc")
   const [orderBy, setOrderBy] = React.useState("id")
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(50)
   const [selected, setSelected] = React.useState([])
-  const [windowInnerHeight, setWindowInnerHeight] = React.useState(window.innerHeight)
+  const [windowInnerHeight, setWindowInnerHeight] = React.useState(
+    window.innerHeight
+  )
+  const [filter, setFilter] = React.useState("")
 
   const updateWindowDimensions = event => {
     setWindowInnerHeight(window.innerHeight)
   }
 
   React.useEffect(() => {
-    window.addEventListener('resize', updateWindowDimensions)
+    window.addEventListener("resize", updateWindowDimensions)
   })
 
   const handleChangePage = (event, newPage) => {
@@ -87,12 +120,12 @@ export default function TransactionsTableQuery({ readonly }) {
   }
 
   const handleChangeRowsPerPage = event => {
-    if (typeof(event.target.value) === "string") {
+    if (typeof event.target.value === "string") {
       setRowsPerPage(parseInt(event.target.value, 50))
     } else {
       setRowsPerPage(event.target.value)
     }
-    
+
     setPage(0)
   }
 
@@ -121,49 +154,38 @@ export default function TransactionsTableQuery({ readonly }) {
     setSelected(newSelected)
   }
 
+  const handleDeleteAction = event => {
+    // TODO: handle deletion of transactions
+    console.log(event)
+    return null
+  }
+
+  const handleFilterSelected = event => {
+    setFilter(event.target.value)
+    setPage(0)
+  }
+
   return (
-    <Query query={getTransactionsQuery(page, rowsPerPage, order, orderBy)}>
+    <Query
+      query={getTransactionsQuery(page, rowsPerPage, order, orderBy, filter)}
+    >
       {result => {
         const { error, data, loading } = result
         if (loading) {
-          return (
-            <Card className="rotate-div">
-              <CardHeader
-                avatar={
-                  <HourglassEmptyOutlined
-                    color="primary"
-                    className="rotate-infinite"
-                  />
-                }
-                title="Transactions list loading..."
-              ></CardHeader>
-              <CardContent>
-                <Typography>Please, wait...</Typography>
-              </CardContent>
-              <LinearProgress color="primary" />
-            </Card>
-          )
+          return <LoadingCard />
         }
 
         if (!data || !data.transactionConnection.edges || error) {
           if (error) {
             console.error(error)
           }
-          return (
-            <Card className="rotate-div">
-              <CardHeader
-                avatar={<Error color="secondary" />}
-                title="Loading transactions list failed!"
-              ></CardHeader>
-              <CardContent>
-                <Typography>Error: {error || "no data"}</Typography>
-              </CardContent>
-            </Card>
-          )
+          return <ErrorCard error={error} />
         }
 
         const rows = data.transactionConnection.edges.map(edge => edge.node)
         const totalCount = data.transactionConnection.pageInfo.totalCount
+
+        const currencies = data.currencies.map(i => i.code)
 
         const handleSelectAllClick = event => {
           if (event.target.checked) {
@@ -180,11 +202,16 @@ export default function TransactionsTableQuery({ readonly }) {
             <EnhancedTableToolbar
               readonly={readonly}
               numSelected={selected.length}
+              onDeleteAction={handleDeleteAction}
+              onFilterSelected={handleFilterSelected}
+              filterSelectList={currencies}
+              filterValue={filter}
+              filterTitle="Currency"
             />
             <Paper style={{ height: windowInnerHeight - 164, width: "100%" }}>
               <EnhancedTable
                 rows={rows}
-                rowCount={rows.length}
+                rowCount={totalCount}
                 rowsPerPage={rowsPerPage}
                 columns={columns}
                 order={order}

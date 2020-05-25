@@ -6,7 +6,7 @@ import { v4 as uuid4 } from "uuid"
 
 const typeDefs = `
   type Query {
-    transactionConnection(page: Int!, pageSize: Int!, order: String, orderBy: String): TransactionConnection
+    transactionConnection(page: Int!, pageSize: Int!, order: String, orderBy: String, filter: String): TransactionConnection
     currencies: [Currency]
   }
 
@@ -106,11 +106,18 @@ for (var i = 0; i < 20000; i++) {
 
 const resolvers = {
   Query: {
-    transactionConnection: (_parent, { page, pageSize, order, orderBy }) => {
-      console.log(`transactions query: ${JSON.stringify({ page, pageSize, order, orderBy })}`)
-      const transactionList = Object.values(transactions)
+    transactionConnection: (_parent, q) => {
+      const { page, pageSize, order, orderBy, filter } = q
+      console.log(`transactions query: ${JSON.stringify(q)}`)
       
-      let edges = stableSort(transactionList, getComparator(order, orderBy))
+      const applyFilter = (filter) => (row) => {
+        return (filter === "" || filter === row.currency )
+      }
+
+      const transactionList = stableSort(Object.values(transactions), getComparator(order, orderBy))
+        .filter(applyFilter(filter));
+        
+      let edges = transactionList
         .slice(
           page * pageSize,
           page * pageSize + pageSize
