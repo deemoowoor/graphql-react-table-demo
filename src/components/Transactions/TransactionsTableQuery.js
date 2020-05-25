@@ -199,6 +199,8 @@ export default function TransactionsTableQuery({ readonly }) {
         
         const otherElementsHeight = 172
 
+        const rowsOnPage = Math.min(rowsPerPage, totalCount - page * rowsPerPage)
+    
         return (
           <TableContainer>
             <EnhancedTableToolbar
@@ -214,7 +216,7 @@ export default function TransactionsTableQuery({ readonly }) {
               <EnhancedTable
                 rows={rows}
                 rowCount={totalCount}
-                rowsPerPage={rowsPerPage}
+                rowsOnPage={rowsOnPage}
                 columns={columns}
                 order={order}
                 orderBy={orderBy}

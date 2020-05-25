@@ -209,10 +209,9 @@ class EnhancedVirtualizedTable extends React.Component {
   render() {
     const {
       columns,
-      page,
       rows,
       rowCount,
-      rowsPerPage,
+      rowsOnPage,
       order,
       orderBy,
       onRequestSort,
@@ -255,7 +254,7 @@ class EnhancedVirtualizedTable extends React.Component {
             headerHeight={headerHeight}
             className={classes.table}
             rowGetter={({ index }) => rows[index]}
-            rowCount={rowCount}
+            rowCount={rowsOnPage}
             rowClassName={this.getRowClassName}
             onRowClick={onRowClick}
             rowRenderer={rowProps =>
