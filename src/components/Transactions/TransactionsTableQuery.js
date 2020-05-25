@@ -196,6 +196,8 @@ export default function TransactionsTableQuery({ readonly }) {
 
           setSelected([])
         }
+        
+        const otherElementsHeight = 172
 
         return (
           <TableContainer>
@@ -208,7 +210,7 @@ export default function TransactionsTableQuery({ readonly }) {
               filterValue={filter}
               filterTitle="Currency"
             />
-            <Paper style={{ height: windowInnerHeight - 164, width: "100%" }}>
+            <Paper style={{ height: windowInnerHeight - otherElementsHeight, width: "100%" }}>
               <EnhancedTable
                 rows={rows}
                 rowCount={totalCount}
