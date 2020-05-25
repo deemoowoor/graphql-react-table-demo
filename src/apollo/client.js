@@ -27,9 +27,8 @@ const typeDefs = `
   }
 
   type PageInfo {
-    endCursor: ID!
-    hasNextPage: Boolean
-
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
   type Transaction {
@@ -124,7 +123,7 @@ const resolvers = {
       const response = {
         edges,
         pageInfo: {
-          endCursor: transactionList.length,
+          totalCount: transactionList.length,
           hasNextPage: page * pageSize + 1 < transactionList.length,
         },
       }

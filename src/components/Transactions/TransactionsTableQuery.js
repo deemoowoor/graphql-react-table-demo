@@ -12,10 +12,13 @@ import { Query } from "@apollo/react-components"
 import { gql } from "@apollo/client"
 
 import TablePagination from "@material-ui/core/TablePagination"
+import TableContainer from "@material-ui/core/TableContainer"
 import HourglassEmptyOutlined from "@material-ui/icons/HourglassEmptyOutlined"
 import Error from "@material-ui/icons/Error"
+import Paper from "@material-ui/core/Paper"
 
 import EnhancedTable from "../EnhancedTable/EnhancedTable"
+import EnhancedTableToolbar from "../EnhancedTable/EnhancedTableToolbar"
 
 const getTransactionsQuery = (cursor, pageSize, order, orderBy) => gql`
   {
@@ -29,7 +32,7 @@ const getTransactionsQuery = (cursor, pageSize, order, orderBy) => gql`
         }
       }
       pageInfo {
-        endCursor
+        totalCount
         hasNextPage
       }
     }
@@ -39,24 +42,57 @@ const getTransactionsQuery = (cursor, pageSize, order, orderBy) => gql`
   }
 `
 
-const headCells = [
-  { id: "id", numeric: false, disablePadding: true, label: "ID" },
-  { id: "amount", numeric: true, disablePadding: false, label: "Amount" },
-  { id: "currency", numeric: false, disablePadding: false, label: "Currency" },
+const columns = [
+  {
+    dataKey: "id",
+    numeric: false,
+    disablePadding: false,
+    label: "ID",
+    width: 200,
+  },
+  {
+    dataKey: "amount",
+    numeric: true,
+    disablePadding: false,
+    label: "Amount",
+    width: 200,
+  },
+  {
+    dataKey: "currency",
+    numeric: false,
+    disablePadding: false,
+    label: "Currency",
+    width: 200,
+  },
 ]
 
-export default function TransactionsTableQuery({readonly}) {
+export default function TransactionsTableQuery({ readonly }) {
   const [order, setOrder] = React.useState("asc")
   const [orderBy, setOrderBy] = React.useState("id")
   const [page, setPage] = React.useState(0)
-  const [rowsPerPage, setRowsPerPage] = React.useState(10)
+  const [rowsPerPage, setRowsPerPage] = React.useState(50)
+  const [selected, setSelected] = React.useState([])
+  const [windowInnerHeight, setWindowInnerHeight] = React.useState(window.innerHeight)
+
+  const updateWindowDimensions = event => {
+    setWindowInnerHeight(window.innerHeight)
+  }
+
+  React.useEffect(() => {
+    window.addEventListener('resize', updateWindowDimensions)
+  })
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage)
   }
 
   const handleChangeRowsPerPage = event => {
-    setRowsPerPage(parseInt(event.target.value, 10))
+    if (typeof(event.target.value) === "string") {
+      setRowsPerPage(parseInt(event.target.value, 50))
+    } else {
+      setRowsPerPage(event.target.value)
+    }
+    
     setPage(0)
   }
 
@@ -64,6 +100,25 @@ export default function TransactionsTableQuery({readonly}) {
     const isAsc = orderBy === property && order === "asc"
     setOrder(isAsc ? "desc" : "asc")
     setOrderBy(property)
+  }
+
+  const handleRowClick = (_event, selectedIndex, rowData) => {
+    let newSelected = []
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, rowData.id)
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1))
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1))
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1)
+      )
+    }
+
+    setSelected(newSelected)
   }
 
   return (
@@ -108,17 +163,39 @@ export default function TransactionsTableQuery({readonly}) {
         }
 
         const rows = data.transactionConnection.edges.map(edge => edge.node)
-        const totalCount = data.transactionConnection.pageInfo.endCursor
+        const totalCount = data.transactionConnection.pageInfo.totalCount
+
+        const handleSelectAllClick = event => {
+          if (event.target.checked) {
+            const newSelecteds = rows.map(item => item.id)
+            setSelected(newSelecteds)
+            return
+          }
+
+          setSelected([])
+        }
 
         return (
-          <>
-            <EnhancedTable 
-              rows={rows}
-              headCells={headCells}
-              order={order}
-              orderBy={orderBy} 
-              handleRequestSort={handleRequestSort}
-              readonly={readonly} />
+          <TableContainer>
+            <EnhancedTableToolbar
+              readonly={readonly}
+              numSelected={selected.length}
+            />
+            <Paper style={{ height: windowInnerHeight - 164, width: "100%" }}>
+              <EnhancedTable
+                rows={rows}
+                rowCount={rows.length}
+                rowsPerPage={rowsPerPage}
+                columns={columns}
+                order={order}
+                orderBy={orderBy}
+                onRequestSort={handleRequestSort}
+                onRowClick={handleRowClick}
+                onSelectAllClick={handleSelectAllClick}
+                readonly={readonly}
+                selected={selected}
+              />
+            </Paper>
             <TablePagination
               rowsPerPageOptions={[10, 50, 100, 500, 1000, 10000]}
               component="div"
@@ -128,7 +205,7 @@ export default function TransactionsTableQuery({readonly}) {
               onChangePage={handleChangePage}
               onChangeRowsPerPage={handleChangeRowsPerPage}
             />
-          </>
+          </TableContainer>
         )
       }}
     </Query>
