@@ -116,15 +116,15 @@ class EnhancedVirtualizedTable extends React.Component {
         style={{ height: headerHeight }}
         align={headCell.numeric || false ? "right" : "left"}
         padding={headCell.disablePadding ? "none" : "default"}
-        sortDirection={orderBy === headCell.id ? order : false}
+        sortDirection={orderBy === headCell.dataKey ? order : false}
       >
         <TableSortLabel
-          active={orderBy === headCell.id}
-          direction={orderBy === headCell.id ? order : "asc"}
-          onClick={createSortHandler(headCell.id)}
+          active={orderBy === headCell.dataKey}
+          direction={orderBy === headCell.dataKey ? order : "asc"}
+          onClick={createSortHandler(headCell.dataKey)}
         >
           {headCell.label}
-          {orderBy === headCell.id ? (
+          {orderBy === headCell.dataKey ? (
             <span className={classes.visuallyHidden}>
               {order === "desc" ? "sorted descending" : "sorted ascending"}
             </span>
