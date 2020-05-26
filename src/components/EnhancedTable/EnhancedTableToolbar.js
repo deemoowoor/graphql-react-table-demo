@@ -1,18 +1,24 @@
 import React from "react"
 
 import clsx from "clsx"
+import { v4 as uuid4 } from "uuid"
 import { Typography } from "@material-ui/core"
 import { lighten, makeStyles } from "@material-ui/core/styles"
 import Toolbar from "@material-ui/core/Toolbar"
 import IconButton from "@material-ui/core/IconButton"
+import Button from "@material-ui/core/Button"
 import Tooltip from "@material-ui/core/Tooltip"
+import FormGroup from "@material-ui/core/FormGroup"
 import FormControl from "@material-ui/core/FormControl"
 import InputLabel from "@material-ui/core/InputLabel"
 import Select from "@material-ui/core/Select"
 import MenuItem from "@material-ui/core/MenuItem"
+import TextField from "@material-ui/core/TextField"
 
+import AddIcon from "@material-ui/icons/Add"
 import DeleteIcon from "@material-ui/icons/Delete"
 import FilterListIcon from "@material-ui/icons/FilterList"
+import RepeatIcon from "@material-ui/icons/Repeat"
 
 const useToolbarStyles = makeStyles(theme => ({
   root: {
@@ -39,18 +45,78 @@ const useToolbarStyles = makeStyles(theme => ({
   selectEmpty: {
     marginTop: theme.spacing(2),
   },
+  addForm: {
+    width: "100%",
+    display: "inline-flex"
+  },
+  inlineForm: {
+    display: "inline-flex"
+  }
 }))
+
+const AddForm = props => {
+  const classes = useToolbarStyles()
+  const { data, onFormSubmit } = props
+  const [currency, setCurrency] = React.useState(data[0])
+  const [uuid, setUuid] = React.useState(uuid4())
+  const [amount, setAmount] = React.useState(0)
+
+  const onCurrencySelected = event => {
+    setCurrency(event.target.value)
+  }
+
+  return (
+    <form onSubmit={(event) => onFormSubmit({event, uuid, currency, amount})} classes={classes.addForm}>
+      <FormGroup row={true}>
+        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
+          <TextField id="uuid" label="UUID" value={uuid} />
+          <Tooltip title="Regenerate">
+            <IconButton onClick={event => setUuid(uuid4)}>
+              <RepeatIcon />
+            </IconButton>
+          </Tooltip>
+        </FormControl>
+        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
+          <TextField id="amount" label="Amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
+        </FormControl>
+        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
+          <Select
+            labelId="currency-select-outlined-label"
+            id="currency-select-outlined"
+            onChange={onCurrencySelected}
+            value={currency}
+            label={"Currency"}
+          >
+            {data.map(code => (
+              <MenuItem key={code} value={code}>
+                {code}
+              </MenuItem>
+            ))}
+          </Select>
+          <Button variant="contained" color="primary" onClick={(event) => onFormSubmit({event, uuid, currency, amount})}>
+            Submit
+          </Button>
+        </FormControl>
+      </FormGroup>
+    </form>
+  )
+}
 
 const EnhancedTableToolbar = props => {
   const classes = useToolbarStyles()
+  const [showAddForm, setShowAddForm] = React.useState(false)
+
   const {
     numSelected,
     readonly,
     onDeleteAction,
+    onAddAction,
+    onEditAction,
     onFilterSelected,
     filterSelectList,
     filterTitle,
     filterValue,
+    data,
   } = props
 
   return (
@@ -78,7 +144,14 @@ const EnhancedTableToolbar = props => {
           Transactions
         </Typography>
       )}
-
+      {!readonly && showAddForm ? <AddForm data={data} onFormSubmit={onAddAction}/> : null}
+      {!readonly ? (
+        <Tooltip title="Add">
+          <IconButton aria-label="add" onClick={event => setShowAddForm(true)}>
+            <AddIcon color="action" />
+          </IconButton>
+        </Tooltip>
+      ) : null}
       {numSelected > 0 && !readonly ? (
         <Tooltip title="Delete">
           <IconButton aria-label="delete" onClick={onDeleteAction}>
@@ -87,28 +160,28 @@ const EnhancedTableToolbar = props => {
         </Tooltip>
       ) : (
         <>
-        <FilterListIcon key={"icon"} title={filterTitle} /> 
-        <FormControl variant="outlined" className={classes.formControl}>
-          <InputLabel id="filter-select-outlined-label">
-            {filterTitle}
-          </InputLabel>
-          <Select
-            labelId="filter-select-outlined-label"
-            id="filter-select-outlined"
-            value={filterValue || ""}
-            onChange={onFilterSelected}
-            label={filterTitle}
-          >
-            <MenuItem key={"empty-menu-item"} value="">
-              <em>None</em>
-            </MenuItem>
-            {filterSelectList.map(code => (
-              <MenuItem key={code} value={code}>
-                {code}
+          <FilterListIcon key={"icon"} title={filterTitle} />
+          <FormControl className={classes.formControl}>
+            <InputLabel id="filter-select-outlined-label">
+              {filterTitle}
+            </InputLabel>
+            <Select
+              labelId="filter-select-outlined-label"
+              id="filter-select-outlined"
+              value={filterValue || ""}
+              onChange={onFilterSelected}
+              label={filterTitle}
+            >
+              <MenuItem key={"empty-menu-item"} value="">
+                <em>None</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+              {filterSelectList.map(code => (
+                <MenuItem key={code} value={code}>
+                  {code}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </>
       )}
     </Toolbar>

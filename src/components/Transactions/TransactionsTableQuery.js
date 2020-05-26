@@ -9,22 +9,34 @@ import {
 } from "@material-ui/core"
 
 import { Query } from "@apollo/react-components"
-import { gql } from "@apollo/client"
+import { gql, useMutation } from "@apollo/client"
 
 import TablePagination from "@material-ui/core/TablePagination"
 import TableContainer from "@material-ui/core/TableContainer"
+import Paper from "@material-ui/core/Paper"
+import Snackbar from '@material-ui/core/Snackbar';
+
 import HourglassEmptyOutlined from "@material-ui/icons/HourglassEmptyOutlined"
 import Error from "@material-ui/icons/Error"
-import Paper from "@material-ui/core/Paper"
 
 import EnhancedTable from "../EnhancedTable/EnhancedTable"
 import EnhancedTableToolbar from "../EnhancedTable/EnhancedTableToolbar"
 
-const getTransactionsQuery = (cursor, pageSize, order, orderBy, filter) => 
-{
-  return gql`
-  {
-    transactionConnection(page: ${cursor}, pageSize: ${pageSize}, order: "${order}", orderBy: "${orderBy}", filter: "${filter}") {
+const QUERY_TRANSACTIONS_AND_CURRENCIES = gql`
+  query TransactionConnection(
+    $page: ID!
+    $pageSize: Int!
+    $order: String
+    $orderBy: String
+    $filter: String
+  ) {
+    transactionConnection(
+      page: $page
+      pageSize: $pageSize
+      order: $order
+      orderBy: $orderBy
+      filter: $filter
+    ) {
       edges {
         node {
           id
@@ -43,7 +55,54 @@ const getTransactionsQuery = (cursor, pageSize, order, orderBy, filter) =>
     }
   }
 `
-}
+
+const ADD_TRANSACTION = gql`
+  mutation AddTransaction($uuid: String!, $amount: Float!, $currency: String!) {
+    addTransaction(uuid: $uuid, amount: $amount, currency: $currency) {
+      id
+      uuid
+      amount
+      currency
+    }
+  }
+`
+
+const UPDATE_TRANSACTION = gql`
+  mutation UpdateTransaction(
+    $id: ID!
+    $uuid: ID!
+    $amount: Float!
+    $currency: String!
+  ) {
+    updateTransaction(
+      id: $id
+      uuid: $uuid
+      amount: $amount
+      currency: $currency
+    ) {
+      id
+      uuid
+      amount
+      currency
+    }
+  }
+`
+
+const DELETE_TRANSACTION = gql`
+  mutation DeleteTransaction($id: ID!) {
+    deleteTransaction(id: $id) {
+      ok
+    }
+  }
+`
+
+const DELETE_BULK_TRANSACTIONS = gql`
+  mutation DeleteTransactionsBulk($idList: [ID!]) {
+    deleteTransactionsBulk(idList: $idList) {
+      ok
+    }
+  }
+`
 
 const columns = [
   {
@@ -105,6 +164,15 @@ export default function TransactionsTableQuery({ readonly }) {
   const [windowInnerHeight, setWindowInnerHeight] = React.useState(
     window.innerHeight
   )
+
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false)
+
+  const [addTransaction, { addData }] = useMutation(ADD_TRANSACTION)
+  const [updateTransaction, { updateData }] = useMutation(UPDATE_TRANSACTION)
+  const [deleteTransactions, { deleteData }] = useMutation(
+    DELETE_BULK_TRANSACTIONS
+  )
+
   const [filter, setFilter] = React.useState("")
 
   const updateWindowDimensions = event => {
@@ -135,8 +203,9 @@ export default function TransactionsTableQuery({ readonly }) {
     setOrderBy(property)
   }
 
-  const handleRowClick = (_event, selectedIndex, rowData) => {
+  const handleRowClick = ({ rowData }) => {
     let newSelected = []
+    const selectedIndex = selected.indexOf(rowData.id)
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, rowData.id)
@@ -154,23 +223,36 @@ export default function TransactionsTableQuery({ readonly }) {
     setSelected(newSelected)
   }
 
-  const handleDeleteAction = event => {
-    // TODO: handle deletion of transactions
-    console.log(event)
-    return null
+  const handleRowDoubleClick = ({ rowData }) => {
+    console.log(`Doubleclick: ${rowData}`)
   }
+
+  const handleDeleteAction = async (event, refetch) => {
+    const result = await deleteTransactions({ variables: { idList: selected } })
+    setSnackbarOpen(true)
+    console.log(result.data.deleteTransactionsBulk.okCount)
+    setSelected([])
+    refetch()
+  }
+
+  const handleAddAction = async (event, refetch) => {}
 
   const handleFilterSelected = event => {
     setFilter(event.target.value)
     setPage(0)
   }
 
+  const handleSnackbarClose = (event) => {
+    setSnackbarOpen(false)
+  }
+
   return (
     <Query
-      query={getTransactionsQuery(page, rowsPerPage, order, orderBy, filter)}
+      query={QUERY_TRANSACTIONS_AND_CURRENCIES}
+      variables={{ page, pageSize: rowsPerPage, order, orderBy, filter }}
     >
       {result => {
-        const { error, data, loading } = result
+        const { error, data, loading, refetch } = result
         if (loading) {
           return <LoadingCard />
         }
@@ -196,23 +278,32 @@ export default function TransactionsTableQuery({ readonly }) {
 
           setSelected([])
         }
-        
+
         const otherElementsHeight = 172
 
-        const rowsOnPage = Math.min(rowsPerPage, totalCount - page * rowsPerPage)
-    
+        const rowsOnPage = Math.min(
+          rowsPerPage,
+          totalCount - page * rowsPerPage
+        )
+
         return (
           <TableContainer>
             <EnhancedTableToolbar
               readonly={readonly}
               numSelected={selected.length}
-              onDeleteAction={handleDeleteAction}
+              onDeleteAction={event => handleDeleteAction(event, refetch)}
               onFilterSelected={handleFilterSelected}
               filterSelectList={currencies}
               filterValue={filter}
               filterTitle="Currency"
+              data={currencies}
             />
-            <Paper style={{ height: windowInnerHeight - otherElementsHeight, width: "100%" }}>
+            <Paper
+              style={{
+                height: windowInnerHeight - otherElementsHeight,
+                width: "100%",
+              }}
+            >
               <EnhancedTable
                 rows={rows}
                 rowCount={totalCount}
@@ -222,6 +313,7 @@ export default function TransactionsTableQuery({ readonly }) {
                 orderBy={orderBy}
                 onRequestSort={handleRequestSort}
                 onRowClick={handleRowClick}
+                onRowDoubleClick={handleRowDoubleClick}
                 onSelectAllClick={handleSelectAllClick}
                 readonly={readonly}
                 selected={selected}
@@ -236,6 +328,9 @@ export default function TransactionsTableQuery({ readonly }) {
               onChangePage={handleChangePage}
               onChangeRowsPerPage={handleChangeRowsPerPage}
             />
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Typography>Action completed successfully</Typography>
+            </Snackbar>
           </TableContainer>
         )
       }}

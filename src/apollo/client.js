@@ -12,8 +12,9 @@ const typeDefs = `
 
   type Mutation {
     addTransaction(uuid: String!, amount: Float!, currency: String!): Transaction
-    editTransaction(id: ID!, uuid: ID!, amount: Float!, currency: String!): Transaction
+    updateTransaction(id: ID!, uuid: ID!, amount: Float!, currency: String!): Transaction
     deleteTransaction(id: ID!): DeleteResponse
+    deleteTransactionsBulk(idList: [ID!]): DeleteBulkResponse
   }
 
   type TransactionConnection {
@@ -45,6 +46,10 @@ const typeDefs = `
 
   type DeleteResponse {
     ok: Boolean!
+  }
+
+  type DeleteBulkResponse {
+    okCount: Int!
   }
 `
 
@@ -104,6 +109,8 @@ for (var i = 0; i < 20000; i++) {
   })
 }
 
+console.log(`Added ${transactionIdCounter} transactions`)
+
 const resolvers = {
   Query: {
     transactionConnection: (_parent, q) => {
@@ -144,10 +151,12 @@ const resolvers = {
 
   Mutation: {
     addTransaction: (_parent, { transaction }) => {
+      console.log(`addTransaction ${JSON.stringify(transaction)}`)
       return addTransaction(transaction)
     },
 
-    editTransaction: (_parent, { id, ...transaction }) => {
+    updateTransaction: (_parent, { id, ...transaction }) => {
+      console.log(`updateTransaction ${id} ${JSON.stringify(transaction)}`)
       if (!transactions[id]) {
         throw new Error("Transaction does not exist")
       }
@@ -161,10 +170,26 @@ const resolvers = {
     },
 
     deleteTransaction: (_parent, { id }) => {
+      console.log(`deleteTransaction (${id})`)
       const ok = Boolean(transactions[id])
       delete transactions[id]
       return { ok }
     },
+
+    deleteTransactionsBulk: (_parent, { idList }) => {
+      console.log(`deleteTransactionsBulk (${idList})`)
+      var okCount = 0
+
+      idList.map(id => {
+        const ok = Boolean(transactions[id])
+        if (ok) {
+          delete transactions[id]
+          okCount++
+        }
+      })
+
+      return { okCount }
+    }
   },
 }
 

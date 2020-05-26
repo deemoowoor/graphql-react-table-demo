@@ -46,6 +46,9 @@ const styles = theme => ({
   tableCell: {
     flex: 1,
   },
+  checkboxCell: {
+    maxWidth: "50px",
+  },
   noClick: {
     cursor: "initial",
   },
@@ -62,43 +65,51 @@ class EnhancedVirtualizedTable extends React.Component {
     rowHeight: 48,
   }
 
-  headerСellRenderer = ({
-    columnIndex,
+  headerRowRenderer = ({
+    readonly,
     numSelected,
     rowCount,
-    readonly,
-    onRequestSort,
+    className,
+    style,
     onSelectAllClick,
-    orderBy,
-    order,
+    columns,
   }) => {
+    const { headerHeight, classes } = this.props
+
+    return (
+      <div className={className} role="row" style={style}>
+        {!readonly ? (
+          <TableCell
+            component="div"
+            className={clsx(
+              classes.tableCell,
+              classes.flexContainer,
+              classes.noClick,
+              classes.checkboxCell
+            )}
+            variant="head"
+            style={{ height: headerHeight }}
+            align={"left"}
+            key={"checkbox-cell"}
+            padding="checkbox"
+          >
+            <Checkbox
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+              inputProps={{ "aria-label": "select all" }}
+            />
+          </TableCell>
+        ) : null}
+        {columns}
+      </div>
+    )
+  }
+
+  headerСellRenderer = ({ columnIndex, onRequestSort, orderBy, order }) => {
     const { headerHeight, columns, classes } = this.props
 
     const headCell = columns[columnIndex]
-
-    if (columnIndex === 0 && !readonly)
-      return (
-        <TableCell
-          component="div"
-          className={clsx(
-            classes.tableCell,
-            classes.flexContainer,
-            classes.noClick
-          )}
-          variant="head"
-          style={{ height: headerHeight }}
-          align={headCell.numeric || false ? "right" : "left"}
-          key={"checkbox-cell"}
-          padding="checkbox"
-        >
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-            inputProps={{ "aria-label": "select all" }}
-          />
-        </TableCell>
-      )
 
     const createSortHandler = property => event => {
       onRequestSort(event, property)
@@ -137,8 +148,8 @@ class EnhancedVirtualizedTable extends React.Component {
   rowRenderer = ({
     className,
     columns,
-    rowIndex: index,
     key,
+    index: rowIndex,
     rowData,
     style,
     onRowClick,
@@ -150,14 +161,13 @@ class EnhancedVirtualizedTable extends React.Component {
       return null
     }
 
-    const isItemSelected = this.isSelected(rowData.id) && !readonly
-    const labelId = `enhanced-table-checkbox-${index}`
+    const isItemSelected = !readonly && this.isSelected(rowData.id)
 
     return (
       <TableRow
         component="div"
         hover
-        onClick={onRowClick}
+        onClick={event => onRowClick({event, index: rowIndex, rowData})}
         role="checkbox"
         aria-checked={isItemSelected}
         tabIndex={-1}
@@ -170,33 +180,41 @@ class EnhancedVirtualizedTable extends React.Component {
           <TableCell
             component="div"
             padding="checkbox"
-            className={clsx(classes.tableCell, classes.flexContainer)}
+            className={clsx(
+              classes.tableCell,
+              classes.flexContainer,
+              classes.checkboxCell
+            )}
           >
             <Checkbox
               checked={isItemSelected}
-              inputProps={{ "aria-labelledby": labelId }}
+              inputProps={{ "aria-labelledby": `enhanced-table-checkbox-0` }}
             />
           </TableCell>
         ) : null}
 
-        {columns.map((item, index) => (
-          <TableCell
-            key={index}
-            component="div"
-            id={labelId}
-            scope="row"
-            padding="default"
-            align={columnsSpec[index].numeric ? "right" : "left"}
-            className={clsx(classes.tableCell, classes.flexContainer)}
-          >
-            {item}
-          </TableCell>
-        ))}
+        {columns.map((item, index) => {
+          const labelId = `enhanced-table-checkbox-${index}`
+
+          return (
+            <TableCell
+              key={index}
+              component="div"
+              id={labelId}
+              scope="row"
+              padding="default"
+              align={columnsSpec[index].numeric ? "right" : "left"}
+              className={clsx(classes.tableCell, classes.flexContainer)}
+            >
+              {item}
+            </TableCell>
+          )
+        })}
       </TableRow>
     )
   }
 
-  isSelected = id => this.state.selected.indexOf(id) !== -1
+  isSelected = id => this.props.selected.indexOf(id) !== -1
 
   getRowClassName = ({ index }) => {
     const { classes, onRowClick } = this.props
@@ -226,21 +244,6 @@ class EnhancedVirtualizedTable extends React.Component {
       ...tableProps
     } = this.props
 
-    const carefulCellDataGetter = _ref => {
-      if (!_ref.rowData) {
-        return null
-      }
-
-      const dataKey = _ref.dataKey,
-        rowData = _ref.rowData
-
-      if (typeof rowData.get === "function") {
-        return rowData.get(dataKey)
-      } else {
-        return rowData[dataKey]
-      }
-    }
-
     return (
       <AutoSizer>
         {({ height, width }) => (
@@ -263,6 +266,16 @@ class EnhancedVirtualizedTable extends React.Component {
                 ...rowProps,
               })
             }
+            headerRowRenderer={headerRowProps =>
+              this.headerRowRenderer({
+                readonly,
+                rowCount: rowsOnPage,
+                onSelectAllClick,
+                numSelected: selected.length,
+                columnsSpec: columns,
+                ...headerRowProps,
+              })
+            }
             {...tableProps}
           >
             {columns.map(({ dataKey, ...other }, index) => {
@@ -280,7 +293,6 @@ class EnhancedVirtualizedTable extends React.Component {
                       order,
                     })
                   }
-                  cellDataGetter={carefulCellDataGetter}
                   cellRenderer={props => props.cellData}
                   className={classes.flexContainer}
                   dataKey={dataKey}
