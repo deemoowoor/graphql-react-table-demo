@@ -155,7 +155,6 @@ class EnhancedVirtualizedTable extends React.Component {
     rowData,
     style,
     onRowClick,
-    columnsSpec,
   }) => {
     const { readonly, classes } = this.props
 
@@ -194,25 +193,29 @@ class EnhancedVirtualizedTable extends React.Component {
             />
           </TableCell>
         ) : null}
-
-        {columns.map((item, index) => {
-          const labelId = `enhanced-table-checkbox-${index}`
-
-          return (
-            <TableCell
-              key={index}
-              component="div"
-              id={labelId}
-              scope="row"
-              padding="default"
-              align={columnsSpec[index].numeric ? "right" : "left"}
-              className={clsx(classes.tableCell, classes.flexContainer)}
-            >
-              {item}
-            </TableCell>
-          )
-        })}
+        {columns}
       </TableRow>
+    )
+  }
+
+  cellRenderer = ({
+    cellData,
+    columnIndex,
+    columnsSpec,
+    classes
+  }) => {
+    return (
+      <TableCell
+        key={columnIndex}
+        component="div"
+        id={`enhanced-table-checkbox-${columnIndex}`}
+        scope="row"
+        padding="default"
+        align={columnsSpec[columnIndex].numeric ? "right" : "left"}
+        className={clsx(classes.tableCell, classes.flexContainer)}
+      >
+        {cellData}
+      </TableCell>
     )
   }
 
@@ -295,7 +298,11 @@ class EnhancedVirtualizedTable extends React.Component {
                       order,
                     })
                   }
-                  cellRenderer={props => props.cellData}
+                  cellRenderer={cellProps => this.cellRenderer({
+                    classes,
+                    columnsSpec: columns,
+                    ...cellProps
+                  })}
                   className={classes.flexContainer}
                   dataKey={dataKey}
                   flexGrow={1}
