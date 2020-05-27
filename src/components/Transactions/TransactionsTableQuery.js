@@ -157,7 +157,7 @@ export default function TransactionsTableQuery({ readonly }) {
   const [rowsPerPage, setRowsPerPage] = React.useState(50)
   const [selected, setSelected] = React.useState([])
   const [windowInnerHeight, setWindowInnerHeight] = React.useState(
-    window.innerHeight
+    400
   )
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false)
@@ -172,6 +172,12 @@ export default function TransactionsTableQuery({ readonly }) {
   )
 
   const [filter, setFilter] = React.useState("")
+
+  React.useEffect(() => {
+    if (window) {
+      setWindowInnerHeight(window.innerHeight)
+    }
+  }, [window])
 
   const updateWindowDimensions = event => {
     setWindowInnerHeight(window.innerHeight)
