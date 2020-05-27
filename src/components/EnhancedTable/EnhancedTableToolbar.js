@@ -1,24 +1,20 @@
 import React from "react"
 
 import clsx from "clsx"
-import { v4 as uuid4 } from "uuid"
 import { Typography } from "@material-ui/core"
 import { lighten, makeStyles } from "@material-ui/core/styles"
-import Toolbar from "@material-ui/core/Toolbar"
-import IconButton from "@material-ui/core/IconButton"
-import Button from "@material-ui/core/Button"
-import Tooltip from "@material-ui/core/Tooltip"
-import FormGroup from "@material-ui/core/FormGroup"
 import FormControl from "@material-ui/core/FormControl"
+import IconButton from "@material-ui/core/IconButton"
 import InputLabel from "@material-ui/core/InputLabel"
-import Select from "@material-ui/core/Select"
 import MenuItem from "@material-ui/core/MenuItem"
-import TextField from "@material-ui/core/TextField"
+import Select from "@material-ui/core/Select"
+import Toolbar from "@material-ui/core/Toolbar"
+import Tooltip from "@material-ui/core/Tooltip"
 
 import AddIcon from "@material-ui/icons/Add"
+import EditIcon from "@material-ui/icons/Edit"
 import DeleteIcon from "@material-ui/icons/Delete"
 import FilterListIcon from "@material-ui/icons/FilterList"
-import RepeatIcon from "@material-ui/icons/Repeat"
 
 const useToolbarStyles = makeStyles(theme => ({
   root: {
@@ -29,7 +25,7 @@ const useToolbarStyles = makeStyles(theme => ({
     theme.palette.type === "light"
       ? {
           color: theme.palette.secondary.main,
-          backgroundColor: lighten(theme.palette.secondary.light, 0.85),
+          backgroundColor: lighten(theme.palette.secondary.light, 0.8),
         }
       : {
           color: theme.palette.text.primary,
@@ -42,81 +38,20 @@ const useToolbarStyles = makeStyles(theme => ({
     margin: theme.spacing(1),
     minWidth: 120,
   },
-  selectEmpty: {
-    marginTop: theme.spacing(2),
-  },
-  addForm: {
-    width: "100%",
-    display: "inline-flex"
-  },
-  inlineForm: {
-    display: "inline-flex"
-  }
 }))
-
-const AddForm = props => {
-  const classes = useToolbarStyles()
-  const { data, onFormSubmit } = props
-  const [currency, setCurrency] = React.useState(data[0])
-  const [uuid, setUuid] = React.useState(uuid4())
-  const [amount, setAmount] = React.useState(0)
-
-  const onCurrencySelected = event => {
-    setCurrency(event.target.value)
-  }
-
-  return (
-    <form onSubmit={(event) => onFormSubmit({event, uuid, currency, amount})} classes={classes.addForm}>
-      <FormGroup row={true}>
-        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
-          <TextField id="uuid" label="UUID" value={uuid} />
-          <Tooltip title="Regenerate">
-            <IconButton onClick={event => setUuid(uuid4)}>
-              <RepeatIcon />
-            </IconButton>
-          </Tooltip>
-        </FormControl>
-        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
-          <TextField id="amount" label="Amount" value={amount} onChange={(event) => setAmount(event.target.value)} />
-        </FormControl>
-        <FormControl className={clsx(classes.formControl, classes.inlineForm)}>
-          <Select
-            labelId="currency-select-outlined-label"
-            id="currency-select-outlined"
-            onChange={onCurrencySelected}
-            value={currency}
-            label={"Currency"}
-          >
-            {data.map(code => (
-              <MenuItem key={code} value={code}>
-                {code}
-              </MenuItem>
-            ))}
-          </Select>
-          <Button variant="contained" color="primary" onClick={(event) => onFormSubmit({event, uuid, currency, amount})}>
-            Submit
-          </Button>
-        </FormControl>
-      </FormGroup>
-    </form>
-  )
-}
 
 const EnhancedTableToolbar = props => {
   const classes = useToolbarStyles()
-  const [showAddForm, setShowAddForm] = React.useState(false)
-
   const {
     numSelected,
     readonly,
     onDeleteAction,
-    onAddAction,
-    onEditAction,
     onFilterSelected,
+    onShowAddDialog,
+    onShowEditDialog,
     filterSelectList,
     filterTitle,
     filterValue,
-    data,
   } = props
 
   return (
@@ -144,15 +79,30 @@ const EnhancedTableToolbar = props => {
           Transactions
         </Typography>
       )}
-      {!readonly && showAddForm ? <AddForm data={data} onFormSubmit={onAddAction}/> : null}
-      {!readonly ? (
+
+      {!readonly && numSelected === 0 ? (
         <Tooltip title="Add">
-          <IconButton aria-label="add" onClick={event => setShowAddForm(true)}>
+          <IconButton
+            aria-label="add"
+            onClick={onShowAddDialog}
+          >
             <AddIcon color="action" />
           </IconButton>
         </Tooltip>
       ) : null}
-      {numSelected > 0 && !readonly ? (
+
+      {!readonly && numSelected === 1 ? (
+        <Tooltip title="Edit">
+          <IconButton
+            aria-label="Edit"
+            onClick={onShowEditDialog}
+          >
+            <EditIcon color="action" />
+          </IconButton>
+        </Tooltip>
+      ) : null}
+
+      {!readonly && numSelected > 0 ? (
         <Tooltip title="Delete">
           <IconButton aria-label="delete" onClick={onDeleteAction}>
             <DeleteIcon />
@@ -184,6 +134,7 @@ const EnhancedTableToolbar = props => {
           </FormControl>
         </>
       )}
+
     </Toolbar>
   )
 }

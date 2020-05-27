@@ -45,9 +45,11 @@ const styles = theme => ({
   },
   tableCell: {
     flex: 1,
+    padding: "12px"
   },
   checkboxCell: {
     maxWidth: "50px",
+    padding: "1px 0 0 0"
   },
   noClick: {
     cursor: "initial",

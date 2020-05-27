@@ -14,13 +14,16 @@ import { gql, useMutation } from "@apollo/client"
 import TablePagination from "@material-ui/core/TablePagination"
 import TableContainer from "@material-ui/core/TableContainer"
 import Paper from "@material-ui/core/Paper"
-import Snackbar from '@material-ui/core/Snackbar';
+import Snackbar from "@material-ui/core/Snackbar"
 
 import HourglassEmptyOutlined from "@material-ui/icons/HourglassEmptyOutlined"
 import Error from "@material-ui/icons/Error"
 
 import EnhancedTable from "../EnhancedTable/EnhancedTable"
 import EnhancedTableToolbar from "../EnhancedTable/EnhancedTableToolbar"
+
+import AddTransactionFormDialog from "../Dialogs/AddTransactionFormDialog"
+import EditTransactionFormDialog from "../Dialogs/EditTransactionFormDialog"
 
 const QUERY_TRANSACTIONS_AND_CURRENCIES = gql`
   query TransactionConnection(
@@ -84,14 +87,6 @@ const UPDATE_TRANSACTION = gql`
       uuid
       amount
       currency
-    }
-  }
-`
-
-const DELETE_TRANSACTION = gql`
-  mutation DeleteTransaction($id: ID!) {
-    deleteTransaction(id: $id) {
-      ok
     }
   }
 `
@@ -167,9 +162,12 @@ export default function TransactionsTableQuery({ readonly }) {
 
   const [snackbarOpen, setSnackbarOpen] = React.useState(false)
 
-  const [addTransaction, { addData }] = useMutation(ADD_TRANSACTION)
-  const [updateTransaction, { updateData }] = useMutation(UPDATE_TRANSACTION)
-  const [deleteTransactions, { deleteData }] = useMutation(
+  const [showAddForm, setShowAddForm] = React.useState(false)
+  const [showEditForm, setShowEditForm] = React.useState(false)
+
+  const [addTransaction, { _addData }] = useMutation(ADD_TRANSACTION)
+  const [updateTransaction, { _updateData }] = useMutation(UPDATE_TRANSACTION)
+  const [deleteTransactions, { _deleteData }] = useMutation(
     DELETE_BULK_TRANSACTIONS
   )
 
@@ -223,26 +221,46 @@ export default function TransactionsTableQuery({ readonly }) {
     setSelected(newSelected)
   }
 
-  const handleRowDoubleClick = ({ rowData }) => {
-    console.log(`Doubleclick: ${rowData}`)
-  }
-
   const handleDeleteAction = async (event, refetch) => {
     const result = await deleteTransactions({ variables: { idList: selected } })
+    console.log("handleDeleteAction", result)
     setSnackbarOpen(true)
-    console.log(result.data.deleteTransactionsBulk.okCount)
     setSelected([])
     refetch()
   }
 
-  const handleAddAction = async (event, refetch) => {}
+  const handleAddTransaction = async (
+    { event, uuid, currency, amount },
+    refetch
+  ) => {
+    const result = await addTransaction({
+      variables: { uuid, currency, amount: parseFloat(amount) },
+    })
+    console.log("handleAddTransaction", result)
+    setSnackbarOpen(true)
+    refetch()
+    setShowAddForm(false)
+  }
+
+  const handleUpdateTransaction = async (
+    { event, id, uuid, currency, amount },
+    refetch
+  ) => {
+    const result = await updateTransaction({
+      variables: { id, uuid, currency, amount: parseFloat(amount) },
+    })
+    console.log("handleUpdateTransaction", result)
+    setSnackbarOpen(true)
+    refetch()
+    setShowEditForm(false)
+  }
 
   const handleFilterSelected = event => {
     setFilter(event.target.value)
     setPage(0)
   }
 
-  const handleSnackbarClose = (event) => {
+  const handleSnackbarClose = _event => {
     setSnackbarOpen(false)
   }
 
@@ -293,10 +311,11 @@ export default function TransactionsTableQuery({ readonly }) {
               numSelected={selected.length}
               onDeleteAction={event => handleDeleteAction(event, refetch)}
               onFilterSelected={handleFilterSelected}
+              onShowAddDialog={() => setShowAddForm(true)}
+              onShowEditDialog={() => setShowEditForm(true)}
               filterSelectList={currencies}
               filterValue={filter}
               filterTitle="Currency"
-              data={currencies}
             />
             <Paper
               style={{
@@ -313,7 +332,6 @@ export default function TransactionsTableQuery({ readonly }) {
                 orderBy={orderBy}
                 onRequestSort={handleRequestSort}
                 onRowClick={handleRowClick}
-                onRowDoubleClick={handleRowDoubleClick}
                 onSelectAllClick={handleSelectAllClick}
                 readonly={readonly}
                 selected={selected}
@@ -328,9 +346,28 @@ export default function TransactionsTableQuery({ readonly }) {
               onChangePage={handleChangePage}
               onChangeRowsPerPage={handleChangeRowsPerPage}
             />
-            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-                <Typography>Action completed successfully</Typography>
+            <Snackbar
+              open={snackbarOpen}
+              autoHideDuration={6000}
+              onClose={handleSnackbarClose}
+            >
+              <Typography>Action completed successfully</Typography>
             </Snackbar>
+
+            <AddTransactionFormDialog
+              open={!readonly && selected.length === 0 && showAddForm}
+              currencyList={currencies}
+              onSubmit={(eventData) => handleAddTransaction(eventData, refetch)}
+              onClose={() => setShowAddForm(false)}
+            />
+
+            <EditTransactionFormDialog
+              open={!readonly && selected.length === 1 && showEditForm}
+              currencyList={currencies}
+              transaction={selected.length === 1 ? rows.filter(r => r.id === selected[0])[0] : null}
+              onSubmit={(eventData) => handleUpdateTransaction(eventData, refetch)}
+              onClose={() => setShowEditForm(false)}
+            />
           </TableContainer>
         )
       }}

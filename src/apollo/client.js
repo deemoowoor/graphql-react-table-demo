@@ -11,7 +11,7 @@ const typeDefs = `
   }
 
   type Mutation {
-    addTransaction(uuid: String!, amount: Float!, currency: String!): Transaction
+    addTransaction(uuid: ID!, amount: Float!, currency: String!): Transaction
     updateTransaction(id: ID!, uuid: ID!, amount: Float!, currency: String!): Transaction
     deleteTransaction(id: ID!): DeleteResponse
     deleteTransactionsBulk(idList: [ID!]): DeleteBulkResponse
@@ -150,9 +150,9 @@ const resolvers = {
   },
 
   Mutation: {
-    addTransaction: (_parent, { transaction }) => {
-      console.log(`addTransaction ${JSON.stringify(transaction)}`)
-      return addTransaction(transaction)
+    addTransaction: (_parent, { uuid, amount, currency }) => {
+      console.log("addTransaction", uuid, amount, currency)
+      return addTransaction({uuid, amount, currency})
     },
 
     updateTransaction: (_parent, { id, ...transaction }) => {
@@ -186,6 +186,7 @@ const resolvers = {
           delete transactions[id]
           okCount++
         }
+        return ok
       })
 
       return { okCount }

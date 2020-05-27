@@ -3,7 +3,8 @@ import React from "react"
 import { ApolloProvider } from "@apollo/client"
 import { client } from "../apollo/client"
 
-import Container from '@material-ui/core/Container';
+import CssBaseline from "@material-ui/core/CssBaseline"
+import Container from "@material-ui/core/Container"
 
 import NavBar from "../components/NavBar"
 import "../style/index.css"
@@ -11,12 +12,11 @@ import TransactionsTableQuery from "../components/Transactions/TransactionsTable
 
 const IndexPage = () => (
   <ApolloProvider client={client}>
-    <React.Fragment>
-      <NavBar />
-      <Container maxWidth="lg">
-        <TransactionsTableQuery readonly={true} />
-      </Container>
-    </React.Fragment>
+    <CssBaseline />
+    <NavBar title={"Customer's page"}/>
+    <Container maxWidth="lg">
+      <TransactionsTableQuery readonly={true} />
+    </Container>
   </ApolloProvider>
 )
 

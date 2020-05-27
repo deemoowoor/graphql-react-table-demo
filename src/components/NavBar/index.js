@@ -1,6 +1,6 @@
 import React from "react"
 
-import clsx from 'clsx';
+import clsx from "clsx"
 import { useStaticQuery, graphql } from "gatsby"
 import { withStyles } from "@material-ui/core/styles"
 import AppBar from "@material-ui/core/AppBar"
@@ -8,12 +8,12 @@ import Toolbar from "@material-ui/core/Toolbar"
 import Typography from "@material-ui/core/Typography"
 import IconButton from "@material-ui/core/IconButton"
 import MenuIcon from "@material-ui/icons/Menu"
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import LibraryBooksIcon from '@material-ui/icons/LibraryBooks';
-import Link from '@material-ui/core/Link';
+import Drawer from "@material-ui/core/Drawer"
+import List from "@material-ui/core/List"
+import ListItem from "@material-ui/core/ListItem"
+import ListItemText from "@material-ui/core/ListItemText"
+import AssessmentIcon from "@material-ui/icons/Assessment"
+import BuildIcon from "@material-ui/icons/Build"
 
 const styles = {
   root: {
@@ -25,7 +25,7 @@ const styles = {
   },
   list: {
     width: 250,
-  }
+  },
 }
 
 function DenseAppBar(props) {
@@ -39,36 +39,45 @@ function DenseAppBar(props) {
     }
   `)
 
-  const { classes } = props
+  const { classes, title } = props
 
   const [menu, setMenu] = React.useState(false)
 
-  const toggleMenu = (open) => (event) => {
-    if (event.type === 'keyDown' && (event.key === 'Tab' || event.key === 'Shift')){
-      return;
+  const toggleMenu = open => event => {
+    if (
+      event.type === "keyDown" &&
+      (event.key === "Tab" || event.key === "Shift")
+    ) {
+      return
     }
     setMenu(open)
   }
-  
+
   const list = () => (
-    <div 
+    <div
       className={clsx(classes.list)}
       role="presentation"
       onClick={toggleMenu(false)}
-      onKeyDown={toggleMenu(false)}>
-        <List>
-          <ListItem key={"Customer's page"}>
-            <LibraryBooksIcon/><Link href="/"><ListItemText primary="Customer's page"></ListItemText></Link>
-          </ListItem>
-          <ListItem key={"Backoffice page"}>
-            <LibraryBooksIcon/><Link href="/backoffice"><ListItemText primary="Backoffice"></ListItemText></Link>
-          </ListItem>
-        </List>
+      onKeyDown={toggleMenu(false)}
+    >
+      <List>
+        <ListItem button component="a" href="/" key={"Customer's page"}>
+          <AssessmentIcon />
+          <ListItemText primary="Customer's page" />
+        </ListItem>
+        <ListItem button component="a" href="/backoffice" key={"Backoffice"}>
+          <BuildIcon />
+          <ListItemText primary="Backoffice" />
+        </ListItem>
+      </List>
     </div>
   )
-  
+
   return (
     <div className={classes.root}>
+      <Drawer open={menu} onClose={toggleMenu(false)}>
+        {list()}
+      </Drawer>
       <AppBar position="static">
         <Toolbar variant="dense">
           <IconButton
@@ -79,14 +88,9 @@ function DenseAppBar(props) {
           >
             <MenuIcon />
           </IconButton>
-          <Drawer
-            open={menu}
-            onClose={toggleMenu(false)}
-          >
-            {list()}
-          </Drawer>
+
           <Typography variant="h6" color="inherit">
-            {data.site.siteMetadata.title}
+            {data.site.siteMetadata.title} : {title}
           </Typography>
         </Toolbar>
       </AppBar>
