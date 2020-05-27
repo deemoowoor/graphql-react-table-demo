@@ -177,9 +177,9 @@ export default function TransactionsTableQuery({ readonly }) {
     if (window) {
       setWindowInnerHeight(window.innerHeight)
     }
-  }, [window])
+  }, [])
 
-  const updateWindowDimensions = event => {
+  const updateWindowDimensions = () => {
     setWindowInnerHeight(window.innerHeight)
   }
 
