@@ -1,7 +1,7 @@
 module.exports = {
   siteMetadata: {
-    title: `Hub88 test task`,
-    description: `Test task by Hub88`,
+    title: `Transactions table demo`,
+    description: `Transactions table demo`,
     author: `@gpranshuchittora (starter); @andrei.sosnin`,
   },
   plugins: [
